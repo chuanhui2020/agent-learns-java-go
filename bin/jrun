@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# 运行 Java 25 单文件源码（JEP 458 多文件源码启动 + JEP 512 紧凑源文件）。
+#   --source 25       指定源码级别
+#   --enable-preview  让 preview 特性（如 Ch07 的 StructuredTaskScope）也能跑；
+#                     不使用 preview 特性的文件同样正常运行。
+# 不需要 Maven / Gradle，契合 Go 一贯的「低仪式感」。
+#
+# 用法:  bin/jrun ch00-setup/java/Hello.java
+set -euo pipefail
+
+# 注意：macOS 自带一个空壳 /usr/bin/java，即便没装 JDK 也存在，
+# 所以不能只用 `command -v java`，要真正跑一次 `java -version`。
+if ! java -version >/dev/null 2>&1; then
+  echo "✗ 未找到可用的 JDK。先安装 JDK 25：" >&2
+  echo "    brew install --cask temurin@25" >&2
+  exit 1
+fi
+
+exec java --enable-preview --source 25 "$@"

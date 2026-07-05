@@ -1,0 +1,22 @@
+# Go
+*.test
+*.out
+*.prof
+*.pprof
+cpu.prof
+mem.prof
+/dist/
+
+# Java（单文件源码启动，无需构建产物；以防万一）
+*.class
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Claude Code 本地配置（用户私有，不进仓库）
+.claude/settings.local.json
