@@ -39,3 +39,27 @@ func SumEven(nums []int) int {
 	// TODO: 实现我
 	return 0
 }
+
+// ParseEndpoint 的哨兵错误。调用方用 errors.Is 判断类别，而不是比较错误字符串。
+var (
+	ErrEmptyName = errors.New("endpoint: empty name")
+	ErrNoPort    = errors.New("endpoint: missing port")
+	ErrBadPort   = errors.New("endpoint: bad port")
+)
+
+// ParseEndpoint 把 "名字:端口" 形式的服务地址拆开，例如 "gate-01:7000" -> ("gate-01", 7000)。
+// 名字本身可以含冒号（如 "zone:3:7000" -> ("zone:3", 7000)），所以要按**最后一个**冒号切。
+//
+// 错误约定：
+//
+//	没有冒号                    -> ErrNoPort
+//	名字为空（":7000"）          -> ErrEmptyName
+//	端口不是整数或不在 1..65535  -> 包装了 ErrBadPort 的错误（errors.Is(err, ErrBadPort) 为真），
+//	                               错误信息里要带上原始端口串，便于排查
+//
+// 练习点：strings.CutLast（Go 1.27 新增）、strconv.Atoi、用 fmt.Errorf("%w ...") 包装哨兵错误。
+// 对照 Java：你会写 lastIndexOf(':') + Integer.parseInt，再把 NumberFormatException 包成 IllegalArgumentException。
+func ParseEndpoint(s string) (name string, port int, err error) {
+	// TODO: 实现我
+	return "", 0, nil
+}

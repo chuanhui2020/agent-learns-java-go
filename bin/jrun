@@ -1,19 +1,24 @@
 #!/usr/bin/env bash
 # 运行 Java 25 单文件源码（JEP 458 多文件源码启动 + JEP 512 紧凑源文件）。
 #   --source 25       指定源码级别
-#   --enable-preview  让 preview 特性（如 Ch07 的 StructuredTaskScope）也能跑；
+#   --enable-preview  让 preview 特性（如 Ch10 的 StructuredTaskScope）也能跑；
 #                     不使用 preview 特性的文件同样正常运行。
+#   -Dstdout.encoding / -Dstderr.encoding=UTF-8
+#                     Windows 上 JDK 默认按控制台代码页（如 GBK）输出，Git Bash 按 UTF-8 显示会乱码；
+#                     统一成 UTF-8。macOS / Linux 本来就是 UTF-8，不受影响。
 # 不需要 Maven / Gradle，契合 Go 一贯的「低仪式感」。
 #
 # 用法:  bin/jrun ch00-setup/java/Hello.java
+#        bin/jrun -XX:StartFlightRecording=duration=30s,filename=rec.jfr chNN-xxx/java/Xxx.java   # JVM 参数放在文件名前
 set -euo pipefail
 
 # 注意：macOS 自带一个空壳 /usr/bin/java，即便没装 JDK 也存在，
 # 所以不能只用 `command -v java`，要真正跑一次 `java -version`。
 if ! java -version >/dev/null 2>&1; then
   echo "✗ 未找到可用的 JDK。先安装 JDK 25：" >&2
-  echo "    brew install --cask temurin@25" >&2
+  echo "    Windows: winget install EclipseAdoptium.Temurin.25.JDK" >&2
+  echo "    macOS:   brew install --cask temurin@25" >&2
   exit 1
 fi
 
-exec java --enable-preview --source 25 "$@"
+exec java --enable-preview --source 25 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 "$@"

@@ -2,6 +2,7 @@ package exercises
 
 import (
 	"errors"
+	"strings"
 	"testing"
 )
 
@@ -72,5 +73,53 @@ func TestSumEven(t *testing.T) {
 				t.Errorf("SumEven(%v) = %d, want %d", tt.in, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestParseEndpoint(t *testing.T) {
+	tests := []struct {
+		in       string
+		wantName string
+		wantPort int
+		wantErr  error
+	}{
+		{"gate-01:7000", "gate-01", 7000, nil},
+		{"zone:3:7000", "zone:3", 7000, nil}, // 按最后一个冒号切
+		{"room:1", "room", 1, nil},
+		{"room:65535", "room", 65535, nil},
+		{"gate-01", "", 0, ErrNoPort},
+		{":7000", "", 0, ErrEmptyName},
+		{"gate-01:", "", 0, ErrBadPort},
+		{"gate-01:abc", "", 0, ErrBadPort},
+		{"gate-01:0", "", 0, ErrBadPort},
+		{"gate-01:65536", "", 0, ErrBadPort},
+	}
+	for _, tt := range tests {
+		t.Run(tt.in, func(t *testing.T) {
+			name, port, err := ParseEndpoint(tt.in)
+			if !errors.Is(err, tt.wantErr) {
+				t.Fatalf("ParseEndpoint(%q) err = %v, want %v", tt.in, err, tt.wantErr)
+			}
+			if tt.wantErr != nil {
+				return
+			}
+			if name != tt.wantName || port != tt.wantPort {
+				t.Errorf("ParseEndpoint(%q) = (%q, %d), want (%q, %d)", tt.in, name, port, tt.wantName, tt.wantPort)
+			}
+		})
+	}
+}
+
+// 端口错误要「包装」而不是「替换」：既能 errors.Is 命中哨兵，信息里又保留现场。
+func TestParseEndpointBadPortKeepsContext(t *testing.T) {
+	_, _, err := ParseEndpoint("gate-01:7x00")
+	if !errors.Is(err, ErrBadPort) {
+		t.Fatalf("err = %v, want wrapping ErrBadPort", err)
+	}
+	if err == ErrBadPort {
+		t.Errorf("err 直接返回了哨兵本身，应该用 %%w 包装并带上原始端口串")
+	}
+	if !strings.Contains(err.Error(), "7x00") {
+		t.Errorf("err = %q, 错误信息里应包含原始端口串 \"7x00\"", err)
 	}
 }

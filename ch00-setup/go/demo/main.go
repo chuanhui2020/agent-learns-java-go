@@ -8,6 +8,8 @@ package main
 import (
 	"errors"
 	"fmt"
+	"runtime"
+	"runtime/debug"
 	"strings"
 )
 
@@ -89,11 +91,39 @@ func main() {
 		}
 	}
 	fmt.Printf("[for]    1..5 里最大的是 %d（for 也能当 while 用）\n", best)
+	// 真要取较大值，用内建 max/min（任意个数、任意有序类型），而不是手写三元。
+	fmt.Printf("[max]    max(3, 7, 5) = %d\n", max(3, 7, 5))
 
 	// 6) 热路径字符串拼接用 strings.Builder（对照 Java StringBuilder）。
 	var b strings.Builder
-	for range 3 { // Go 1.22+：for range 整数
+	for range 3 { // for range 整数
 		b.WriteString("go")
 	}
-	fmt.Printf("[build]  %s\n", b.String())
+	fmt.Printf("[sb]     %s\n", b.String())
+
+	// 7) new(expr)：直接拿到一个指向初值的指针。
+	//    常用于"指针表示可选字段"（JSON/protobuf），对照 Java 里用包装类型 Integer 表示可空。
+	lv := new(parseLevelOrZero("7"))
+	fmt.Printf("[new]    *lv = %d（%T）\n", *lv, lv)
+
+	// 8) 工具链自检：二进制自己知道是谁、用什么设置编出来的（对照 jcmd VM.version / VM.flags）。
+	//    同一份代码，go.mod 的 go 行不同，DefaultGODEBUG 就可能不同 —— 见 README 实验 1。
+	fmt.Printf("[tool]   runtime=%s %s/%s GOMAXPROCS=%d NumCPU=%d\n",
+		runtime.Version(), runtime.GOOS, runtime.GOARCH, runtime.GOMAXPROCS(0), runtime.NumCPU())
+	if bi, ok := debug.ReadBuildInfo(); ok {
+		for _, s := range bi.Settings {
+			switch s.Key {
+			case "-compiler", "CGO_ENABLED", "GOAMD64", "DefaultGODEBUG":
+				fmt.Printf("[tool]   %s=%s\n", s.Key, s.Value)
+			}
+		}
+	}
+}
+
+func parseLevelOrZero(s string) int {
+	lvl, err := parseLevel(s)
+	if err != nil {
+		return 0
+	}
+	return lvl
 }
