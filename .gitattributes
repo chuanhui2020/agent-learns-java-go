@@ -1,0 +1,4 @@
+# 统一换行：仓库内一律 LF；bash 脚本在 Windows 检出时也必须保持 LF，否则 Git Bash 执行会因  报错
+* text=auto eol=lf
+bin/* text eol=lf
+*.sh text eol=lf
