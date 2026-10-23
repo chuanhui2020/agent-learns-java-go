@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 运行 Java 25 单文件源码（JEP 458 多文件源码启动 + JEP 512 紧凑源文件）。
 #   --source 25       指定源码级别
-#   --enable-preview  让 preview 特性（如 Ch10 的 StructuredTaskScope）也能跑；
+#   --enable-preview  让 preview 特性（如 Ch13 的 StructuredTaskScope）也能跑；
 #                     不使用 preview 特性的文件同样正常运行。
 #   -Dstdout.encoding / -Dstderr.encoding=UTF-8
 #                     Windows 上 JDK 默认按控制台代码页（如 GBK）输出，Git Bash 按 UTF-8 显示会乱码；

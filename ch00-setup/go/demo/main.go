@@ -24,7 +24,7 @@ const (
 	Staff               // 3
 )
 
-// String() 让 Weapon 满足 fmt.Stringer 接口 —— 隐式实现，无需 implements（Ch02 细讲）。
+// String() 让 Weapon 满足 fmt.Stringer 接口 —— 隐式实现，无需 implements（Ch05 细讲）。
 func (w Weapon) String() string {
 	// switch 默认「不穿透」：每个 case 自带 break，不用手写。
 	// （对照 Java 必须写 break，否则 fallthrough 到下一个 case。）

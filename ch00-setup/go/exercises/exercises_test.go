@@ -25,7 +25,7 @@ func TestDivide(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := Divide(tt.a, tt.b)
-			// errors.Is 沿错误链比较（Ch10 细讲）；这里判断是否是预期的错误。
+			// errors.Is 沿错误链比较（Ch08 细讲）；这里判断是否是预期的错误。
 			if !errors.Is(err, tt.wantErr) {
 				t.Fatalf("Divide(%d, %d) err = %v, want %v", tt.a, tt.b, err, tt.wantErr)
 			}
