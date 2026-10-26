@@ -18,7 +18,51 @@
 
 ## 怎么用这个仓库
 
-每一章一个目录 `chNN-xxx/`，结构统一：
+先读方法论，再从 Ch00 跑通示例和练习。**当前 Ch00、Ch04 已有可运行的 Go / Java 示例与练习桩；Ch04 还提供闭包分配基准和初始化实验。其他章节是讲义与实验规划，代码目录在逐章带教时创建。** 章节“未开始”表示学习进度，不能据此判断示例代码是否已经存在；不要因 Ch04 已有代码就跳过 Ch01–Ch03 的前置知识。
+
+### 首次运行
+
+在仓库根目录执行（Go 命令在 PowerShell / Bash 下相同）：
+
+```text
+go version
+java -version
+go run ./tools/check
+go run ./ch00-setup/go/demo
+```
+
+Java 示例按终端选择入口：
+
+```powershell
+# Windows PowerShell；ExecutionPolicy 只对这次进程生效
+powershell -NoProfile -ExecutionPolicy Bypass -File .\bin\jrun.ps1 ch00-setup/java/Hello.java
+```
+
+```bash
+# Git Bash / Linux / macOS
+bin/jrun ch00-setup/java/Hello.java
+```
+
+两个入口都优先使用 `JAVA_HOME`，未设置时使用 `PATH`；都会检查 **JDK 主版本必须是 25**。JVM 参数放在源文件前，程序参数放在源文件后。PowerShell 中 JVM 参数要加引号，例如 `'-Xmx256m'`、`'-Dmessage=hello world'`；允许执行脚本的终端也可直接调用 `.\bin\jrun.ps1`。
+
+### 仓库自检与练习验收
+
+| 检查目标 | 命令 | 初始仓库预期 |
+|---|---|---|
+| 20 章结构、文档本地链接目标、Go 格式 | `go run ./tools/check` | 通过；不修改文件，不访问网络 |
+| 工具与示例回归测试 | `go test ./tools/... ./ch00-setup/go/demo` | 通过 |
+| Ch04 示例、实验和初始化回归 | `go test ./ch04-functions-closures/go/demo ./ch04-functions-closures/go/lab ./ch04-functions-closures/go/initorder/...` | 通过 |
+| 所有包（含练习）的编译检查 | `go test -run='^$' ./...` | 通过；不执行练习断言 |
+| 静态检查 | `go vet ./...` | 通过 |
+| Go 练习验收 | `go test ./ch00-setup/go/exercises` | **失败**，实现 TODO 后再验收 |
+| Ch04 Go 练习验收 | `go test ./ch04-functions-closures/go/exercises` | **失败**，实现 TODO 后再验收 |
+| Java 练习验收 | Java 入口 + `ch00-setup/java/drills/WarmupDrill.java` | **失败**，实现 TODO 后打印 `ALL PASS` |
+
+自检工具检查 Markdown 行内链接的本地文件或目录是否存在，跳过代码块、代码片段、外部 URL；不检查标题锚点和引用式链接。`go test ./...` 会执行练习测试，初始失败是教学设计，不是安装失败，也不能用跳过练习的检查代替过章验收。
+
+[Ch04 运行入口](ch04-functions-closures/README.md#运行入口)列出了 Java 示例、drill 和预期编译失败示例的命令。`java/compile-fail/` 专门存放非法代码，编译失败就是实验结果，不要把它和正常示例一起批量编译。
+
+每一章一个目录 `chNN-xxx/`，逐步补齐以下结构：
 
 ```
 chNN-xxx/
@@ -46,7 +90,7 @@ chNN-xxx/
 | 跑某章 Go 示例 | `go run ./ch00-setup/go/demo` |
 | 跑某章 Go 练习测试 | `go test ./ch00-setup/go/...` |
 | 带竞态检测（Part 2 起必跑，需 cgo，见「环境」） | `go test -race ./chNN-xxx/go/...` |
-| 跑基准并做统计对比 | `go test -bench=. -count=10 ./chNN-xxx/go/lab > new.txt` → `benchstat old.txt new.txt` |
+| 跑基准并做统计对比 | `go test '-run=^$' '-bench=.' -benchmem -count=10 ./chNN-xxx/go/lab > new.txt` → `benchstat old.txt new.txt` |
 | 看逃逸/内联决策 | `go build -gcflags='-m=2' ./chNN-xxx/go/lab` |
 | 看汇编 / 边界检查 | `go build -gcflags='-S' ./...` / `go build -gcflags='-d=ssa/check_bce' ./...` |
 | 全仓库测试 / 静态检查 | `go test ./...` / `go vet ./...` |
@@ -72,7 +116,7 @@ chNN-xxx/
   # macOS
   brew install --cask temurin@25
   ```
-- `bin/jrun` 是 bash 脚本：Windows 下用 Git Bash 运行（脚本已把 Java 输出统一为 UTF-8，避免中文乱码）。
+- Java 入口：Bash 用 `bin/jrun`，Windows PowerShell 用 `bin/jrun.ps1`（命令见「首次运行」）。两者都把 Java 输出统一为 UTF-8，并检查 JDK 25 与 `JAVA_HOME`。
 - **竞态检测 `-race` 和 cgo（Ch19）都依赖 C 工具链**：Windows 上默认 `CGO_ENABLED=0` 且没有 gcc，`go test -race` 会直接报错。二选一：
   1. 装 C 工具链（如 MSYS2 的 mingw-w64 gcc），然后 `go env -w CGO_ENABLED=1`；
   2. **推荐**：从 Part 2 起在 **WSL2（Linux）** 里跑并发和运行时实验。epoll、cgroup、信号、`perf`、async-profiler 也只在 Linux 上有意义（见方法论第六节）。

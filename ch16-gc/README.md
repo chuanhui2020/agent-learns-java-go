@@ -15,7 +15,7 @@
 - [Ch02](../ch02-values-memory/)：对象布局与紧凑对象头
 - [Ch10](../ch10-scheduler/)：P、STW 与抢占
 
-后续：[Ch17](../ch17-profiling-bench/) 讲 GC 相关的剖析手段；[Ch16](../ch16-zero-alloc-dod/) 讲怎样从数据布局上降低 GC 成本；[Ch23](../ch23-build-observability/) 讲容器里怎样设置 GOMEMLIMIT。
+后续：[Ch17](../ch17-profiling-bench/) 讲 GC 相关的剖析手段。数据布局回看 [Ch02](../ch02-values-memory/)，分配优化回看 [Ch15](../ch15-alloc-escape-compiler/)；GOMEMLIMIT 的语义与实验在本章展开。
 
 ## 💡 关键洞察
 
@@ -65,7 +65,7 @@
 - 规范只规定可达性语义，不规定回收算法。与 GC 相关的语义边界有三条：
   - `runtime.KeepAlive`：保证对象至少活到这一点；
   - finalizer / cleanup：执行时机不确定；
-  - `unsafe.Pointer` 规则：违反规则会让 GC 看不到指针（[Ch16](../ch16-zero-alloc-dod/)）。
+  - `unsafe.Pointer` 规则：违反规则会让 GC 看不到指针（[Ch09](../ch09-reflect-unsafe/)）。
 
 ### 运行时层
 - **周期**（`runtime/mgc.go`）：`gcStart` → 清扫终止（STW）→ 开启写屏障、并发标记（`gcBgMarkWorker` / `gcDrain`）→ `gcMarkDone` → 标记终止（STW，`gcMarkTermination`）→ 关闭写屏障、并发清扫（`gcSweep`，分配时顺带做的懒清扫 + 后台清扫）。
@@ -142,7 +142,7 @@
 - **工具**：
   - `go test -trace=trace.out`，然后 `go tool trace trace.out`，在时间线上找 GC 期间的 mark assist 区段；
   - 对比 `/cpu/classes/gc/mark/assist:cpu-seconds`。
-- **缓解手段**：①减少突发路径的分配（复用缓冲区，[Ch16](../ch16-zero-alloc-dod/)）；②调高 GOGC 并用 GOMEMLIMIT 兜底；③给突发任务限速。
+- **缓解手段**：①减少突发路径的分配（复用缓冲区，[Ch15](../ch15-alloc-escape-compiler/)）；②调高 GOGC 并用 GOMEMLIMIT 兜底；③给突发任务限速。
 - **记录**：每种手段下 tick 的 p99、assist 的 CPU 时间、峰值内存。
 
 ### 实验 3：指针密集 vs 无指针布局的 GC 成本
@@ -170,7 +170,7 @@
 4. `func Pack(es []*Entity) EntityTable`：把指针图转换成不含指针的表结构（下标代替指针、名字放进一个大 `[]byte`）。
    - 测试用 `reflect` 断言行类型不含任何指针字段；
    - 基准测量 `runtime.GC()` 的耗时，对比转换前后。
-5. `func MemoryLimitFor(containerLimit int64, nonHeapReserve int64, headroom float64) int64`：根据容器内存上限计算 GOMEMLIMIT（预留非堆内存和余量），表驱动测试覆盖边界情况。在 [Ch23](../ch23-build-observability/) 中会用到。
+5. `func MemoryLimitFor(containerLimit int64, nonHeapReserve int64, headroom float64) int64`：根据内存预算计算 GOMEMLIMIT（预留非堆内存和余量），表驱动测试覆盖边界情况，并在本章实验中验证软限制与进程 RSS 的区别。
 
 **Java：`java/drills`**
 1. `GcObserveDrill.java`：用 `jdk.jfr.consumer.RecordingStream` 在进程内订阅 `jdk.GarbageCollection` 事件，制造垃圾后触发 GC。自校验收到至少 1 个事件，并打印收集器名称、停顿时长。分别用默认参数和 `-XX:+UseZGC` 运行，对比输出。

@@ -12,13 +12,32 @@
 #        bin/jrun -XX:StartFlightRecording=duration=30s,filename=rec.jfr chNN-xxx/java/Xxx.java   # JVM 参数放在文件名前
 set -euo pipefail
 
+if (( $# == 0 )) || [[ "$1" == "--help" || "$1" == "-h" ]]; then
+  echo 'Usage: bin/jrun [JVM options] path/to/File.java [program arguments]'
+  echo 'Requires JDK 25. JVM options go before the source file.'
+  if (( $# == 0 )); then exit 2; fi
+  exit 0
+fi
+
+# 优先使用 JAVA_HOME，避免 PATH 中的旧版 java 抢先。
+java_cmd=java
+if [[ -n "${JAVA_HOME:-}" ]]; then
+  java_cmd="$JAVA_HOME/bin/java"
+fi
+
 # 注意：macOS 自带一个空壳 /usr/bin/java，即便没装 JDK 也存在，
 # 所以不能只用 `command -v java`，要真正跑一次 `java -version`。
-if ! java -version >/dev/null 2>&1; then
+if ! version_output=$("$java_cmd" -version 2>&1); then
   echo "✗ 未找到可用的 JDK。先安装 JDK 25：" >&2
   echo "    Windows: winget install EclipseAdoptium.Temurin.25.JDK" >&2
   echo "    macOS:   brew install --cask temurin@25" >&2
   exit 1
 fi
 
-exec java --enable-preview --source 25 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 "$@"
+# preview 只能配合同一特性版本运行；JDK 26+ 也不能替代 JDK 25。
+if [[ ! "$version_output" =~ version[[:space:]]+\"25([.\"+-]) ]]; then
+  printf 'JDK 25 is required; selected Java: %s\n%s\n' "$java_cmd" "$version_output" >&2
+  exit 1
+fi
+
+exec "$java_cmd" --enable-preview --source 25 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 "$@"

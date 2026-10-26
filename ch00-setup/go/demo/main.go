@@ -27,7 +27,7 @@ const (
 // String() 让 Weapon 满足 fmt.Stringer 接口 —— 隐式实现，无需 implements（Ch05 细讲）。
 func (w Weapon) String() string {
 	// switch 默认「不穿透」：每个 case 自带 break，不用手写。
-	// （对照 Java 必须写 break，否则 fallthrough 到下一个 case。）
+	// （对照 Java 的冒号式 case；Java 箭头式 case 同样不穿透。）
 	switch w {
 	case Fist:
 		return "拳头"
@@ -49,11 +49,17 @@ func parseLevel(s string) (int, error) {
 		return 0, errors.New("空字符串")
 	}
 	level := 0
+	maxInt := int(^uint(0) >> 1)
 	for _, ch := range s { // for range 遍历字符串的 rune
 		if ch < '0' || ch > '9' {
 			return 0, errors.New("非法字符: " + string(ch))
 		}
-		level = level*10 + int(ch-'0')
+		digit := int(ch - '0')
+		// 必须在乘加前检查：Go 整数溢出不会自动返回错误或触发 panic。
+		if level > (maxInt-digit)/10 {
+			return 0, errors.New("等级超出 int 范围")
+		}
+		level = level*10 + digit
 	}
 	return level, nil
 }

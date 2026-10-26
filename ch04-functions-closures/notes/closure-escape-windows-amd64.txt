@@ -1,0 +1,54 @@
+Command: go test '-gcflags=-m=2' ./ch04-functions-closures/go/lab
+Excerpt filter: project source lines matching capturing by|inlining call to New|moved to heap|func literal (does not escape|escapes to heap)
+
+ch04-functions-closures\go\lab/closures_test.go:6:20: inlining call to NewCounter
+ch04-functions-closures\go\lab/closures_test.go:6:36: inlining call to NewCounter
+ch04-functions-closures\go\lab/closures_test.go:7:6: inlining call to NewCounter.func1
+ch04-functions-closures\go\lab/closures_test.go:7:19: inlining call to NewCounter.func1
+ch04-functions-closures\go\lab/closures_test.go:7:32: inlining call to NewCounter.func1
+ch04-functions-closures\go\lab/closures_test.go:11:19: inlining call to NewReader
+ch04-functions-closures\go\lab/closures_test.go:13:16: inlining call to NewReader.func1
+ch04-functions-closures\go\lab/closures_test.go:17:45: inlining call to NewAdder
+ch04-functions-closures\go\lab/closures_test.go:17:52: inlining call to NewAdder.func1
+ch04-functions-closures\go\lab/closures_test.go:49:18: inlining call to NewAdder
+ch04-functions-closures\go\lab/closures_test.go:60:19: inlining call to NewAdder
+ch04-functions-closures\go\lab/closures_test.go:71:21: inlining call to NewCounter
+ch04-functions-closures\go\lab/closures_test.go:83:20: inlining call to NewReader
+ch04-functions-closures\go\lab/closures.go:9:15: NewAdder capturing by value: x (addr=false assign=false width=8)
+ch04-functions-closures\go\lab/closures.go:10:9: func literal escapes to heap in NewAdder:
+ch04-functions-closures\go\lab/closures.go:10:9: func literal escapes to heap
+ch04-functions-closures\go\lab/closures.go:13:17: NewCounter capturing by ref: x (addr=false assign=true width=8)
+ch04-functions-closures\go\lab/closures.go:14:9: func literal escapes to heap in NewCounter:
+ch04-functions-closures\go\lab/closures.go:13:17: moved to heap: x
+ch04-functions-closures\go\lab/closures.go:14:9: func literal escapes to heap
+ch04-functions-closures\go\lab/closures.go:24:16: NewReader capturing by ref: payload (addr=false assign=false width=512)
+ch04-functions-closures\go\lab/closures.go:25:9: func literal escapes to heap in NewReader:
+ch04-functions-closures\go\lab/closures.go:24:16: moved to heap: payload
+ch04-functions-closures\go\lab/closures.go:25:9: func literal escapes to heap
+ch04-functions-closures\go\lab/closures_test.go:6:20: TestClosureState capturing by ref: x (addr=false assign=true width=8)
+ch04-functions-closures\go\lab/closures_test.go:6:36: TestClosureState capturing by ref: x (addr=false assign=true width=8)
+ch04-functions-closures\go\lab/closures_test.go:11:19: TestClosureState capturing by ref: payload (addr=false assign=false width=512)
+ch04-functions-closures\go\lab/closures_test.go:17:45: TestClosureState capturing by value: x (addr=false assign=false width=8)
+ch04-functions-closures\go\lab/closures_test.go:6:20: func literal does not escape
+ch04-functions-closures\go\lab/closures_test.go:6:36: func literal does not escape
+ch04-functions-closures\go\lab/closures_test.go:11:19: func literal does not escape
+ch04-functions-closures\go\lab/closures_test.go:17:45: func literal does not escape
+ch04-functions-closures\go\lab/closures_test.go:49:18: BenchmarkReturnedLocal capturing by value: x (addr=false assign=false width=8)
+ch04-functions-closures\go\lab/closures_test.go:49:18: func literal does not escape
+ch04-functions-closures\go\lab/closures_test.go:56:12: func literal escapes to heap in BenchmarkSavedValue:
+ch04-functions-closures\go\lab/closures_test.go:60:19: BenchmarkSavedValue capturing by value: x (addr=false assign=false width=8)
+ch04-functions-closures\go\lab/closures_test.go:60:19: func literal escapes to heap in BenchmarkSavedValue:
+ch04-functions-closures\go\lab/closures_test.go:56:12: func literal escapes to heap
+ch04-functions-closures\go\lab/closures_test.go:60:19: func literal escapes to heap
+ch04-functions-closures\go\lab/closures_test.go:67:12: func literal escapes to heap in BenchmarkSavedMutable:
+ch04-functions-closures\go\lab/closures_test.go:71:21: BenchmarkSavedMutable capturing by ref: x (addr=false assign=true width=8)
+ch04-functions-closures\go\lab/closures_test.go:71:21: func literal escapes to heap in BenchmarkSavedMutable:
+ch04-functions-closures\go\lab/closures_test.go:71:21: moved to heap: x
+ch04-functions-closures\go\lab/closures_test.go:67:12: func literal escapes to heap
+ch04-functions-closures\go\lab/closures_test.go:71:21: func literal escapes to heap
+ch04-functions-closures\go\lab/closures_test.go:78:12: func literal escapes to heap in BenchmarkSavedLarge:
+ch04-functions-closures\go\lab/closures_test.go:83:20: BenchmarkSavedLarge capturing by ref: payload (addr=false assign=false width=512)
+ch04-functions-closures\go\lab/closures_test.go:83:20: func literal escapes to heap in BenchmarkSavedLarge:
+ch04-functions-closures\go\lab/closures_test.go:83:20: moved to heap: payload
+ch04-functions-closures\go\lab/closures_test.go:78:12: func literal escapes to heap
+ch04-functions-closures\go\lab/closures_test.go:83:20: func literal escapes to heap

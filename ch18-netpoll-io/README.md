@@ -53,7 +53,7 @@
 - **`io.Reader` 契约**：`Read` 可能在 `n > 0` 的同时返回 `err`，必须先处理 n 个字节再看 err；`io.EOF` 表示正常结束，不是错误。配套工具：`io.ReadFull`、`io.ReadAtLeast`、`io.LimitReader`、`io.TeeReader`、`io.MultiWriter`、`io.Pipe`（同步、无缓冲）。
 - **`io.WriterTo` / `io.ReaderFrom`**：`io.Copy` 的快路径协商。`copyBuffer` 先看 src 有没有实现 `WriterTo`，再看 dst 有没有实现 `ReaderFrom`，都没有才退化成 32KB 缓冲循环。
 - **`net.Conn` 的 deadline**：设的是**绝对时间点**，到期后所有阻塞操作返回 `os.ErrDeadlineExceeded`（`net.Error` 的 `Timeout()` 为 true）。重设 deadline 后连接还能继续用。这和 Java 的 `SO_TIMEOUT`（每次读的相对超时）语义不同。
-- **并发约定**：同一个 Conn 可以一个 goroutine 读、另一个写；多个 goroutine 并发 `Write` 也不会让 fd 状态损坏（`internal/poll` 的 `fdMutex` 串行化），但**多次 Write 之间会交错**，帧可能被拆散，所以协议层必须单写者（[Ch18](../ch18-tcp-gateway/)）。
+- **并发约定**：同一个 Conn 的方法可以由多个 goroutine 并发调用（`internal/poll` 的 `fdMutex` 串行化写操作），但跨多次 `Write` 的逻辑消息不具有整体原子性；需要单写者或覆盖完整消息的同步。并发安全不等于消息边界保证。
 - **`bufio`**：默认缓冲 4096 字节；`bufio.Writer` 必须 `Flush`，且不是并发安全的；`bufio.Reader.Peek` 是分帧的利器。
 - **1.27 新增**：`net.UnixConn` 的读方法遇到对端关闭时直接返回 `io.EOF`，不再包在 `*net.OpError` 里。
 
@@ -74,7 +74,7 @@
 - **零拷贝快路径**：
   - `TCPConn.ReadFrom` → `readFrom`（`net/tcpsock_posix.go`）→ Linux 上的 `spliceFrom`（`net/splice_linux.go`），或源是文件时的 `sendFile`（`net/sendfile.go`）；
   - `TCPConn.WriteTo` → `spliceTo`；
-  - `net.Buffers.WriteTo` → `poll.FD.Writev`（`internal/poll/writev.go`），批量写，[Ch18](../ch18-tcp-gateway/) 的写合并会用到。
+  - `net.Buffers.WriteTo` → `poll.FD.Writev`（`internal/poll/writev.go`），批量写；在本章写合并实验中比较 syscall 次数。
 - **栈成本**：`runtime/stack.go` 里 `stackMin = 2048`；`startingStackSize` 每次 GC 按平均栈用量更新。所以"每连接 2KB"只是下限，读循环里调用链很深时会更大。
 
 ### 源码阅读清单（`$GOROOT/src`）
@@ -99,7 +99,7 @@
 | Windows 实现 | `WEPollSelectorImpl` / `WEPollPoller`（wepoll 适配） | IOCP 完成模型 | **本机 Windows 的实验结论不能外推到 Linux 线上** |
 | 连接与线程关系 | Netty Channel 终身绑定一个 EventLoop 线程 | Conn 不绑定任何 M/P，谁就绪谁跑 | Netty 天然每连接串行；Go 要自己保证单写者、单读者 |
 | 超时语义 | `SO_TIMEOUT`（相对）、`IdleStateHandler`/`ReadTimeoutHandler` | 绝对时间点 deadline，按操作重设，超时后连接仍可用 | Go 心跳要在每次读之前重设 deadline |
-| 缓冲管理 | `ByteBuf` 池化 + 引用计数；heap → direct 中转拷贝 | `[]byte` 由用户或 `bufio` 管理，GC 回收 | Go 少一层拷贝，但缓冲的生命周期要自己设计（[Ch16](../ch16-zero-alloc-dod/)） |
+| 缓冲管理 | `ByteBuf` 池化 + 引用计数；heap → direct 可能需要中转拷贝 | `[]byte` 由用户或 `bufio` 管理，GC 回收 | 拷贝次数取决于具体 I/O 路径；缓冲生命周期与分配成本见 [Ch15](../ch15-alloc-escape-compiler/) |
 | 零拷贝 | `FileChannel.transferTo`（sendfile） | `io.Copy` 自动协商 sendfile/splice | 都要求两端是"原生 fd 类型"；中间包一层 wrapper 就退化 |
 | 每连接常驻成本 | Netty：Channel 对象 + 缓冲，无线程；虚拟线程：栈 chunk 在堆上 | goroutine 栈（≥2KB，按需增长）+ 缓冲 | 10 万连接三者都可行，差别主要在缓冲策略 |
 
@@ -123,7 +123,7 @@
 - **目的**：证明小包场景下瓶颈在 syscall 次数，而不是 goroutine。
 - **方法**：`go/lab/writes/` 每条消息 32 字节、连发 10 万条，三种写法：直接 `conn.Write`、`bufio.Writer`（4KB）、攒批后 `net.Buffers.WriteTo`。
 - **工具**：`strace -c -f` 或 `perf trace -s` 统计 write/writev 次数；`go test -bench -count=10` + `benchstat` 看吞吐。
-- **记录**：syscall 次数、吞吐、尾延迟。这组数据是 [Ch18](../ch18-tcp-gateway/) 写合并设计的基线。
+- **记录**：syscall 次数、吞吐、尾延迟；用这组数据解释批量写对系统调用开销与等待时间的影响。
 
 ### 实验 4：deadline 的成本与精度
 - **方法**：在 `B.Loop` 里每次读前 `SetReadDeadline`，测单次开销；再实测"设 50ms 超时"实际触发时间的误差，Windows 与 Linux 各跑一遍。
@@ -147,7 +147,7 @@
 
 ## 🎮 游戏服落地
 
-- **网关容量规划**：10 万在线时，每连接一个读 goroutine + 一个写 goroutine（或共享写协程池，见 [Ch18](../ch18-tcp-gateway/)）。内存预算 = 栈 + 读写缓冲 + 写队列 + 内核缓冲（`net.core.rmem_default/wmem_default`）。取舍：Netty 共享 EventLoop 线程，内存更紧凑但代码复杂；Go 代码直观，可以用"空闲时不持有大缓冲"（读到数据再从池里借）把内存压下来。
+- **连接内存实验**：固定连接数，分别记录 goroutine 栈、读写缓冲和内核缓冲的占用；对比常驻缓冲与按需分配。Java 侧对比虚拟线程和共享 EventLoop，说明线程模型、缓冲策略各自贡献了多少内存，避免只凭模型名称判断成本。
 - **服务器间内部长连接**：连接少、吞吐高，瓶颈在 syscall 次数和写合并，不在 goroutine 数。优先做批量写和协议层的消息聚合。
 - **心跳与踢人**：每次读之前 `SetReadDeadline(now + 3×心跳间隔)`，超时即判定掉线。Java 侧对应 `IdleStateHandler`。注意 deadline 是绝对时间，必须每次重设。
 - **开发机与线上不一致**：本机 Windows 走 IOCP，线上 Linux 走 epoll，连接数、延迟、零拷贝行为都不同。压测和容量结论必须在 Linux 上得出。

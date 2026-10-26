@@ -11,7 +11,7 @@
 
 ## 🔗 前置
 
-[Ch10](../ch10-scheduler/) · [Ch11](../ch11-channels-select/) · [Ch12](../ch12-sync-memory-model/)（内存模型是本章的理论基础）· [Ch13](../ch13-context-structured/) · [Ch11](../ch11-actor/)
+[Ch10](../ch10-scheduler/) · [Ch11](../ch11-channels-select/) · [Ch12](../ch12-sync-memory-model/)（内存模型是本章的理论基础）· [Ch13](../ch13-context-structured/)
 
 ## 💡 关键洞察
 
@@ -55,7 +55,7 @@
   - **持久阻塞（durably blocked）**：阻塞在气泡内创建的 channel 上、所有分支都是气泡内 channel 的 select、`sync.Cond.Wait`、在气泡内 `Add` 过的 `WaitGroup.Wait`、`time.Sleep`。**以下不算**：`sync.Mutex` / `RWMutex` 加锁、网络 I/O、系统调用。
   - 所有 goroutine 都持久阻塞时：有人调了 `Wait` 就返回；否则时间跳到下一个能唤醒某个 goroutine 的时刻；都不满足就判定死锁，`Test` panic。
   - `synctest.Sleep(d)`（**1.27 新增**）等价于 `time.Sleep(d)` 后紧跟 `synctest.Wait()`，解决"测试和被测代码同时睡同样长时间，谁先醒不确定"的问题。
-  - 网络代码怎么办：`net.Pipe` 是气泡内可用的内存连接；HTTP 用 `httptest.NewTestServer`（**1.27 新增**，内存假网络，[Ch20](../ch20-http-rpc/)）。
+  - 网络代码怎么办：`net.Pipe` 是气泡内可用的内存连接，适合隔离外部 I/O 对确定性实验的影响；本章不展开 HTTP 测试框架。
 - **runtime 的死锁检测**：`checkdead`（`runtime/proc.go`）只在**所有** goroutine 都阻塞、而且没有任何可能唤醒它们的东西时报 `all goroutines are asleep - deadlock!`。线上服务总有监听 socket、timer、信号处理在等待，所以局部死锁永远不会触发它，要靠 goroutineleak profile 和 dump 分析。
 - **vet 相关分析器**：
   - `copylocks`：值拷贝了 `sync.Mutex` 等。
@@ -103,7 +103,7 @@
 - **记录**：每类的 profile 输出片段、取一次 profile 的耗时（它会触发一轮 GC）。
 
 ### 实验 2：synctest 改造依赖时间的测试
-- **方法**：先写一个"真实时间"版本的测试，覆盖带超时重试的 RPC 客户端（3 次重试、指数退避、总超时 10s）和 20Hz 房间 tick（[Ch11](../ch11-actor/)）。再用 `synctest.Test` + `synctest.Sleep` 重写。
+- **方法**：先写一个"真实时间"版本的测试，覆盖一个内存任务的超时重试（3 次重试、指数退避、总超时 10s）和 20Hz 定时循环（定时器语义见 [Ch11](../ch11-channels-select/)）。再用 `synctest.Test` + `synctest.Sleep` 重写。
 - **预期现象**：运行时间从秒级降到毫秒级；连续跑 1000 次（`-count=1000`）结果完全一致；把被测代码里的 `sync.Mutex` 换成 channel 前后，观察"持久阻塞"判定的差异。
 - **记录**：两版测试的耗时、稳定性（失败次数）。
 
@@ -121,13 +121,13 @@
 4. `func DetectDeadlock(dump []byte) []Cycle`（挑战）：解析 `debug=2` 格式的 goroutine dump，找出"互相 ask"的等待环（根据练习约定的 pprof label 或等待原因）。
 
 **Java：`java/drills`**
-1. `JmmDrill.java`：用若干线程和 `volatile` / `VarHandle` 的不同访问模式重现"可见性丢失"和"重排序"（多跑若干轮统计结果分布）。自校验只检查**禁止结果从未出现**，并在注释里写出每个结果对应的 happens-before 推理。完整的 jcstress 版本放到 Ch15 的 JMH 工程里一起做。
+1. `JmmDrill.java`：用若干线程和 `volatile` / `VarHandle` 的不同访问模式重现"可见性丢失"和"重排序"（多跑若干轮统计结果分布）。自校验只检查**禁止结果从未出现**，并在注释里写出每个结果对应的 happens-before 推理。完整的 jcstress 版本作为本章独立实验；JMH 是性能基准工具，见 [Ch17](../ch17-profiling-bench/)，不能替代并发正确性测试。
 2. `LeakDrill.java`：制造一批永远阻塞的虚拟线程，用 JFR（`jdk.VirtualThreadStart` / `End`）和 JSON 线程转储定位它们，对照 Go 的 goroutineleak profile 体验差异。
 
 ## 🎮 游戏服落地
 
 - **CI 规范**：所有包 `go test -race -count=3`（在 Linux runner 上）；并发敏感的包另外跑 `-count=50` 的夜间任务；每个服务的集成测试结束时调用 `assertNoLeaks`。Java 服务对应：核心并发组件写 jcstress 测试，集成测试检查 JFR 里虚拟线程的 Start/End 平衡。
-- **线上巡检**：网关和房间服暴露 `/debug/pprof/goroutineleak`（只对内网开放，[Ch23](../ch23-build-observability/)）。巡检脚本每天抓一次，泄漏数非零就告警。goroutine 带上房间 id / 玩家 id 的 pprof labels，泄漏报告能直接定位到业务实体。
+- **泄漏定位实验**：给不同任务的 goroutine 添加 pprof labels，抓取 `goroutineleak` profile，检查哪些阻塞能被检测、报告如何关联到创建位置。标签与采样机制见 [Ch17](../ch17-profiling-bench/)。
 - **房间逻辑的确定性测试**：战斗、技能 CD、超时踢人这类逻辑全部用 `synctest` 写测试，模拟几个小时的对局只需几毫秒。Java 侧通常要先抽象出 `Clock` 和调度器接口才能做到。
 - **"偶发数据错乱"排查剧本**：先在压测环境开 `-race` 复现；复现不了就加大并发、开启 `GODEBUG` 相关调试项；还不行就审查所有跨 goroutine 共享的可变状态，确认它们都有唯一的所有者。
 

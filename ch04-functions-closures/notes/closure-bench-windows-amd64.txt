@@ -1,0 +1,66 @@
+goos: windows
+goarch: amd64
+pkg: agent-learns-java-go/ch04-functions-closures/go/lab
+cpu: 12th Gen Intel(R) Core(TM) i7-12700
+BenchmarkDirect-20           	255316432	         0.4754 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDirect-20           	254003733	         0.4718 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDirect-20           	250178251	         0.4744 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDirect-20           	253139456	         0.4825 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDirect-20           	240958048	         0.4852 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDirect-20           	252080715	         0.4770 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDirect-20           	256819630	         0.4697 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDirect-20           	254564661	         0.4719 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDirect-20           	252509841	         0.4739 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDirect-20           	255958500	         0.4727 ns/op	       0 B/op	       0 allocs/op
+BenchmarkImmediate-20        	252453531	         0.4753 ns/op	       0 B/op	       0 allocs/op
+BenchmarkImmediate-20        	252769404	         0.4716 ns/op	       0 B/op	       0 allocs/op
+BenchmarkImmediate-20        	252608179	         0.4685 ns/op	       0 B/op	       0 allocs/op
+BenchmarkImmediate-20        	254942158	         0.4709 ns/op	       0 B/op	       0 allocs/op
+BenchmarkImmediate-20        	252108254	         0.4763 ns/op	       0 B/op	       0 allocs/op
+BenchmarkImmediate-20        	257218184	         0.4680 ns/op	       0 B/op	       0 allocs/op
+BenchmarkImmediate-20        	253293340	         0.4740 ns/op	       0 B/op	       0 allocs/op
+BenchmarkImmediate-20        	249991666	         0.4755 ns/op	       0 B/op	       0 allocs/op
+BenchmarkImmediate-20        	252566176	         0.4759 ns/op	       0 B/op	       0 allocs/op
+BenchmarkImmediate-20        	255130243	         0.4740 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReturnedLocal-20    	100000000	         1.113 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReturnedLocal-20    	100000000	         1.077 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReturnedLocal-20    	100000000	         1.124 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReturnedLocal-20    	100000000	         1.070 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReturnedLocal-20    	100000000	         1.133 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReturnedLocal-20    	100000000	         1.515 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReturnedLocal-20    	79061799	         1.761 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReturnedLocal-20    	52714812	         2.058 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReturnedLocal-20    	76599003	         1.965 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReturnedLocal-20    	80380466	         1.792 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSavedValue-20       	 5679397	        18.60 ns/op	      16 B/op	       1 allocs/op
+BenchmarkSavedValue-20       	 6181742	        19.90 ns/op	      16 B/op	       1 allocs/op
+BenchmarkSavedValue-20       	 7269818	        18.86 ns/op	      16 B/op	       1 allocs/op
+BenchmarkSavedValue-20       	 6413442	        16.96 ns/op	      16 B/op	       1 allocs/op
+BenchmarkSavedValue-20       	 4529190	        23.90 ns/op	      16 B/op	       1 allocs/op
+BenchmarkSavedValue-20       	 6898612	        21.30 ns/op	      16 B/op	       1 allocs/op
+BenchmarkSavedValue-20       	 5008890	        22.71 ns/op	      16 B/op	       1 allocs/op
+BenchmarkSavedValue-20       	 4951495	        23.77 ns/op	      16 B/op	       1 allocs/op
+BenchmarkSavedValue-20       	 5892316	        21.75 ns/op	      16 B/op	       1 allocs/op
+BenchmarkSavedValue-20       	 5585811	        20.15 ns/op	      16 B/op	       1 allocs/op
+BenchmarkSavedMutable-20     	 3269852	        36.28 ns/op	      24 B/op	       2 allocs/op
+BenchmarkSavedMutable-20     	 3720468	        38.31 ns/op	      24 B/op	       2 allocs/op
+BenchmarkSavedMutable-20     	 3703212	        36.81 ns/op	      24 B/op	       2 allocs/op
+BenchmarkSavedMutable-20     	 3883833	        31.36 ns/op	      24 B/op	       2 allocs/op
+BenchmarkSavedMutable-20     	 3826920	        33.04 ns/op	      24 B/op	       2 allocs/op
+BenchmarkSavedMutable-20     	 3399606	        37.85 ns/op	      24 B/op	       2 allocs/op
+BenchmarkSavedMutable-20     	 3419641	        38.05 ns/op	      24 B/op	       2 allocs/op
+BenchmarkSavedMutable-20     	 3319335	        39.80 ns/op	      24 B/op	       2 allocs/op
+BenchmarkSavedMutable-20     	 3786312	        34.61 ns/op	      24 B/op	       2 allocs/op
+BenchmarkSavedMutable-20     	 3357112	        34.99 ns/op	      24 B/op	       2 allocs/op
+BenchmarkSavedLarge-20       	  925353	       189.7 ns/op	     528 B/op	       2 allocs/op
+BenchmarkSavedLarge-20       	  710521	       200.6 ns/op	     528 B/op	       2 allocs/op
+BenchmarkSavedLarge-20       	  737824	       183.1 ns/op	     528 B/op	       2 allocs/op
+BenchmarkSavedLarge-20       	 1000000	       203.5 ns/op	     528 B/op	       2 allocs/op
+BenchmarkSavedLarge-20       	  518952	       218.0 ns/op	     528 B/op	       2 allocs/op
+BenchmarkSavedLarge-20       	 1000000	       196.2 ns/op	     528 B/op	       2 allocs/op
+BenchmarkSavedLarge-20       	  954577	       189.4 ns/op	     528 B/op	       2 allocs/op
+BenchmarkSavedLarge-20       	  782727	       201.1 ns/op	     528 B/op	       2 allocs/op
+BenchmarkSavedLarge-20       	  603409	       185.2 ns/op	     528 B/op	       2 allocs/op
+BenchmarkSavedLarge-20       	  765745	       209.8 ns/op	     528 B/op	       2 allocs/op
+PASS
+ok  	agent-learns-java-go/ch04-functions-closures/go/lab	8.255s

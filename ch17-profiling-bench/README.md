@@ -89,7 +89,7 @@
 - **标签（labels）**：`pprof.Do(ctx, pprof.Labels("room", id), fn)`、`pprof.WithLabels`、`pprof.SetGoroutineLabels`、`pprof.Label` / `ForLabels`。
   - 标签会被子 goroutine 继承，CPU 样本会带上标签；
   - 分析时用 `go tool pprof -tagfocus=room=1001` 过滤，可以按房间或协议拆分热点；
-  - 1.27 起，`go 1.27` 模块的 traceback 头行也会带上标签（[Ch23](../ch23-build-observability/)）。
+  - 1.27 起，`go 1.27` 模块的 traceback 头行也会带上标签（[Ch08](../ch08-errors-panic/)）。
 - **执行追踪 `runtime/trace`**：
   - 记录 goroutine 的调度、阻塞、系统调用、GC、STW、堆大小等事件；
   - 用户注解：`trace.NewTask`、`StartRegion`、`WithRegion`、`Log`；未开启追踪时 `trace.IsEnabled()` 为 false，开销几乎为零；
@@ -207,7 +207,7 @@
    - 两边都不需要复现问题就能拿到现场。
 2. **按房间、按协议拆分热点**："哪个副本 / 哪个协议最耗 CPU"。Go 用 pprof labels 加 `-tagfocus`；Java 在自定义 JFR 事件里带上 roomId 和协议号字段。
 3. **压测与版本对比**：每个版本压测时同时采 CPU、heap、mutex profile，与上一个版本做 `-diff_base` 对比。基准测试用 benchstat 做门禁，退化超过阈值就阻止合并。
-4. **PGO 闭环**：从生产环境定期采样合并 profile，提交成 `default.pgo`；发布后在 Ch23 的面板上观察 CPU 变化，验证收益。
+4. **PGO 验证**：用相同负载生成 profile，分别构建启用和关闭 PGO 的版本；比较 CPU profile、吞吐和重复基准统计，验证收益与负载代表性的关系（[Ch15](../ch15-alloc-escape-compiler/)）。
 5. **安全**：调试端口只绑定内网或回环地址并要求鉴权；`jfr scrub` 脱敏后才能把录制文件交给外部。
 
 ## ✅ 验收答辩题

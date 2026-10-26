@@ -16,7 +16,7 @@
 - [Ch06](../ch06-generics/)：泛型的字典实现
 - [Ch10](../ch10-scheduler/)：g/m/p（mcache 挂在 P 上）
 
-后续：[Ch16](../ch16-gc/) GC 会接着讲"分配如何推动 GC、mark assist 如何向分配者征税"；[Ch16](../ch16-zero-alloc-dod/) 把本章的结论落到零分配热路径上。
+后续：[Ch16](../ch16-gc/) GC 会接着讲"分配如何推动 GC、mark assist 如何向分配者征税"；[Ch17](../ch17-profiling-bench/) 用基准和分配剖析验证优化效果。
 
 ## 💡 关键洞察
 

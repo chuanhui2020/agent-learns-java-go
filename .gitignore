@@ -9,6 +9,10 @@ mem.prof
 
 # Java（单文件源码启动，无需构建产物；以防万一）
 *.class
+*.jfr
+/out/
+/demo
+/demo.exe
 
 # macOS
 .DS_Store

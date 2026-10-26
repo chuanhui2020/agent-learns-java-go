@@ -13,6 +13,8 @@
 
 无。这是第一章。
 
+运行入口和仓库自检见 [根目录 README](../README.md#首次运行)。本章的 Go / Java 练习初始失败是预期行为；先跑通 demo，再逐个实现 TODO。PowerShell 使用 `bin/jrun.ps1`，Bash 使用 `bin/jrun`。
+
 ## 💡 关键洞察
 
 1. **`go.mod` 的 `go 1.27.0` 不是注释，而是语义开关。** 它决定本模块能用哪些语言特性、vet 允许用哪些标准库符号、二进制默认的 GODEBUG 取值。同一个 go1.27.3 工具链，模块写 `go 1.26.0` 时，二进制里会被写入 `DefaultGODEBUG=tracebacklabels=0,x509sslcertoverrideplatform=0`，即保留旧行为。
